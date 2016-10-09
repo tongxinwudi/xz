@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dictionary>
+	<group name="SYSUSER_ROLE">
+		<item key="1" value="超级管理员" />
+		<item key="2" value="普通管理员" />
+		<item key="3" value="渠道管理员" />
+		<item key="4" value="系统管理员" />
+		<item key="5" value="测试账号" />
+		<item key="6" value="客服监控" />
+	</group>
+	<group name="CONFIG_TYPE">
+		<item key="1" value="监控" />
+	</group>
+</dictionary>

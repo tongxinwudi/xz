@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	 xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans classpath:/org/springframework/beans/factory/xml/spring-beans-3.2.xsd
+				http://www.springframework.org/schema/context classpath:/org/springframework/context/config/spring-context-3.2.xsd
+				http://www.springframework.org/schema/aop classpath:/org/springframework/aop/config/spring-aop-3.2.xsd
+				http://www.springframework.org/schema/tx classpath:/org/springframework/transaction/config/spring-tx-3.2.xsd
+				http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+				http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd">
+
+	<task:scheduled-tasks> 
+	<!-- 每天凌晨18：47执行基金持有统计计算  cron="0 58 19 * * ?" fixed-delay="5000"  fixed-rate="5000" -->  
+        <!-- task:scheduled ref="errorLogServiceImpl" method="readLogDirect" fixed-rate="10000"/-->
+		<!-- 每天凌晨3：12执行基金持有统计计算 -->  
+        <task:scheduled ref="fundServiceImpl" method="saveFundHoldTime" cron="0 12 3 * * ?"/>
+       <!-- 每天凌晨2:10执行用户收益统计计算 -->  
+        <task:scheduled ref="profitServiceImpl" method="static_month_invest" cron="0 10 2 * * ?"/> 
+       <!-- 每天凌晨2:11执行用户收益统计计算 -->  
+       <task:scheduled ref="fundServiceImpl" method="statistic_month_limit" cron="0 11 2 * * ?"/>  
+       <!-- 每天凌晨2:11执行个人投资计算 -->  
+       <task:scheduled ref="personalServiceImpl" method="statistic_day_personal_invest" cron="0 07 17 * * ?"/>     
+	</task:scheduled-tasks>  
+
+	
+	 <task:scheduled-tasks> 
+		<!-- 每天凌晨2:00执行运营统计计算 -->  
+        <task:scheduled ref="operateServiceImpl" method="statistic_day_invest" cron="0 0/30 * * * ?"/>  
+        <task:scheduled ref="operateServiceImpl" method="statistic_day_inventory" cron="0 0 6 * * ?"/>   
+        <task:scheduled ref="operateServiceImpl" method="statistic_day_fail"   cron="0 5 2 * * ?"/>   
+	</task:scheduled-tasks>  
+	
+	 <task:scheduled-tasks> 
+		<!-- 每天凌晨3:00发送邮件 -->  
+        <task:scheduled ref="mailServiceImpl" method="sendMail" cron="0 0 6 ? * MON"/>  
+        <!-- task:scheduled ref="errorLogServiceImpl" method="sendErrorMail" fixed-rate="3600000"/-->
+	</task:scheduled-tasks>  
+	
+	 <task:scheduled-tasks> 
+		<!-- 每天凌晨00:01执行会员统计计算 -->  
+        <task:scheduled ref="memberServiceImpl" method="statistic_week_ration" cron="0 10 0 ? * MON"/>   
+	    <task:scheduled ref="memberServiceImpl" method="statistic_day_becomeVip" cron="0 31 10 * * ?"/>       
+	</task:scheduled-tasks>  
+	
+	<util:properties id="errorLogConfig" location="classpath:errorlog.properties" />
+	
+ 
+	
+	<context:annotation-config />
+	<context:component-scan base-package="com.forestry" />
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl" value="jdbc:mysql://localhost:12606/qj_qjs_db?useUnicode=true&amp;characterEncoding=utf-8&amp;allowMultiQueries=true" />
+		<property name="user" value="bonus" />
+		<property name="password" value="asdfw82jghasldwkbg" />
+		<!-- 
+		<property name="driverClass" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="jdbcUrl" value="jdbc:oracle:thin:@127.0.0.1:1521:orcl" />
+		<property name="user" value="SYSTEM" />
+		<property name="password" value="SkyNet888999" />	
+		-->
+		<!--
+		<property name="driverClass" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />
+		<property name="jdbcUrl" value="jdbc:sqlserver://localhost:1433;DatabaseName=forestry" />
+		<property name="user" value="sa" />
+		<property name="password" value="123456" />
+		-->
+		<property name="acquireIncrement" value="3" />
+		<property name="idleConnectionTestPeriod" value="120" />
+		<property name="initialPoolSize" value="3" />
+		<property name="minPoolSize" value="3" />
+		<property name="maxPoolSize" value="15" />
+		<property name="numHelperThreads" value="3" />
+		<property name="preferredTestQuery" value="select 1" />
+	</bean>
+		
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+				<!-- <prop key="hibernate.dialect">org.hibernate.dialect.OracleDialect</prop> -->
+				<!-- <prop key="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</prop> -->
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.use_outer_join">true</prop>
+				<prop key="hibernate.jdbc.fetch_size">30</prop>
+				<prop key="hibernate.jdbc.batch_size">30</prop>
+				<prop key="hibernate.jdbc.batch_versioned_data">true</prop>
+				<prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.use_query_cache">true</prop>
+				<prop key="hibernate.cache.provider_class">net.sf.ehcache.hibernate.EhCacheProvider</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+				<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="javax.persistence.validation.mode">none</prop>
+			</props>
+		</property>
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>com.forestry.model</value>  
+			</list>
+		</property>
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+</beans>
